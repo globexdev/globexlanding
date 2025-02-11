@@ -14,7 +14,9 @@ import {
   Heart,
   Lightbulb,
   Target,
-  Rocket
+  Rocket,
+  Menu,
+  X
 } from 'lucide-react';
 
 function App() {
@@ -22,6 +24,7 @@ function App() {
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
@@ -30,7 +33,7 @@ function App() {
     
     const targetId = href.replace('#', '');
     const element = document.getElementById(targetId);
-    const headerOffset = 80; // Height of your fixed header
+    const headerOffset = 80;
     
     if (element) {
       const elementPosition = element.getBoundingClientRect().top;
@@ -41,6 +44,7 @@ function App() {
         behavior: 'smooth'
       });
     }
+    setIsMenuOpen(false); // Close menu after clicking a link
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -93,6 +97,20 @@ function App() {
               <Code2 className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">Globex</span>
             </div>
+            
+            {/* Mobile menu button */}
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+
+            {/* Desktop Navigation */}
             <div className="hidden md:flex space-x-8">
               <a href="#home" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Home</a>
               <a href="#services" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Services</a>
@@ -100,9 +118,24 @@ function App() {
               <a href="#about" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
               <a href="#contact" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
             </div>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors">
+
+            <button className="hidden md:block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors">
               Get Started
             </button>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'} pt-4`}>
+            <div className="flex flex-col space-y-4">
+              <a href="#home" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Home</a>
+              <a href="#services" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Services</a>
+              <a href="#projects" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Projects</a>
+              <a href="#about" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
+              <a href="#contact" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
+              <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors w-full">
+                Get Started
+              </button>
+            </div>
           </div>
         </nav>
       </header>
