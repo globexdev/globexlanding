@@ -60,7 +60,7 @@ function App() {
     };
 
     try {
-      const response = await fetch('process-form.php', {
+      const response = await fetch('https://globexenterprises.net/public/process-form.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
