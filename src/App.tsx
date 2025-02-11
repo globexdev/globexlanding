@@ -25,6 +25,7 @@ function App() {
     message: string;
   }>({ type: null, message: '' });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
@@ -44,11 +45,12 @@ function App() {
         behavior: 'smooth'
       });
     }
-    setIsMenuOpen(false); // Close menu after clicking a link
+    setIsMenuOpen(false);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setFormStatus({ type: null, message: '' });
 
     const formData = new FormData(e.currentTarget);
@@ -60,12 +62,16 @@ function App() {
     };
 
     try {
-      const response = await fetch('https://globexenterprises.net/public/process-form.php', {
+      const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          ...data,
+          access_key: '3caa78ff-f162-420a-b287-4c9d28330554' // Replace with your Web3Forms access key
+        })
       });
 
       const result = await response.json();
@@ -77,13 +83,15 @@ function App() {
         });
         (e.target as HTMLFormElement).reset();
       } else {
-        throw new Error(result.error || 'Failed to send message');
+        throw new Error(result.message || 'Failed to send message');
       }
     } catch (error) {
       setFormStatus({
         type: 'error',
         message: 'Sorry, there was an error sending your message. Please try again.'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -369,9 +377,14 @@ function App() {
               ></textarea>
               <button 
                 type="submit"
-                className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={isSubmitting}
+                className={`w-full bg-blue-600 text-white px-8 py-4 rounded-lg transition-colors ${
+                  isSubmitting 
+                    ? 'opacity-75 cursor-not-allowed' 
+                    : 'hover:bg-blue-700'
+                }`}
               >
-                Send Message
+                {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           </div>
