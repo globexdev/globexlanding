@@ -10,32 +10,41 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Validate input
 $data = json_decode(file_get_contents('php://input'), true);
+if (!$data || !isset($data['name']) || !isset($data['email']) || !isset($data['subject']) || !isset($data['message'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing required fields']);
+    exit;
+}
 
+// Sanitize input
 $to = 'hello@globexenterprises.net';
+$from_name = htmlspecialchars($data['name']);
+$from_email = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
 $subject = htmlspecialchars($data['subject']);
-$name = htmlspecialchars($data['name']);
-$email = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
 $message = htmlspecialchars($data['message']);
 
-$headers = "From: $name <$email>\r\n";
-$headers .= "Reply-To: $email\r\n";
-$headers .= "MIME-Version: 1.0\r\n";
-$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+// Validate email
+if (!filter_var($from_email, FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid email address']);
+    exit;
+}
 
-$emailBody = "
-<html>
-<body>
-    <h2>New Contact Form Submission</h2>
-    <p><strong>Name:</strong> $name</p>
-    <p><strong>Email:</strong> $email</p>
-    <p><strong>Subject:</strong> $subject</p>
-    <p><strong>Message:</strong></p>
-    <p>" . nl2br($message) . "</p>
-</body>
-</html>
-";
+// Simpler headers for shared hosting
+$headers = "From: $from_name <$from_email>\r\n";
+$headers .= "Reply-To: $from_email\r\n";
+$headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
+// Simple plain text message (more reliable on shared hosting)
+$emailBody = "New Contact Form Submission\n\n";
+$emailBody .= "Name: $from_name\n";
+$emailBody .= "Email: $from_email\n";
+$emailBody .= "Subject: $subject\n\n";
+$emailBody .= "Message:\n$message\n";
+
+// Send email
 $success = mail($to, $subject, $emailBody, $headers);
 
 if ($success) {

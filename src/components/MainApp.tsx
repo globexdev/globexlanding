@@ -16,7 +16,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 
 interface MainAppProps {
@@ -28,6 +28,7 @@ interface MainAppProps {
 export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
@@ -50,37 +51,59 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
     setIsMenuOpen(false);
   };
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    if (email && !validateEmail(email)) {
+      setEmailError('Please enter a valid email address (e.g., name@example.com)');
+    } else {
+      setEmailError('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    const form = e.currentTarget;
+    const emailInput = form.querySelector('input[type="email"]') as HTMLInputElement;
+    
+    if (!validateEmail(emailInput.value)) {
+      setEmailError('Please enter a valid email address (e.g., name@example.com)');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData(e.currentTarget);
-      const data = {
-        access_key: '3caa78ff-f162-420a-b287-4c9d28330554',
-        name: formData.get('name'),
-        email: formData.get('email'),
-        subject: formData.get('subject'),
-        message: formData.get('message'),
-        botcheck: false
-      };
-
+      const formData = new FormData(form);
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          name: formData.get('name'),
+          email: formData.get('email'),
+          subject: formData.get('subject'),
+          message: formData.get('message'),
+          access_key: '3caa78ff-f162-420a-b287-4c9d28330554'
+        })
       });
 
-      const result = await response.json();
+      const data = await response.json();
 
-      if (response.ok && result.success) {
+      if (response.ok) {
         alert('Message sent successfully!');
-        (e.target as HTMLFormElement).reset();
+        form.reset();
+        setEmailError('');
       } else {
-        throw new Error(result.message || 'Failed to send message');
+        throw new Error(data.message || 'Failed to send message');
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -372,13 +395,21 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
                   required
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-colors"
                 />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-colors"
-                />
+                <div className="space-y-1">
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                    title="Please enter a valid email address (e.g., name@example.com)"
+                    required
+                    onChange={handleEmailChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${emailError ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-colors`}
+                  />
+                  {emailError && (
+                    <p className="text-red-500 text-sm">{emailError}</p>
+                  )}
+                </div>
               </div>
               <input
                 type="text"
@@ -397,7 +428,7 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
               
               <button 
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !!emailError}
                 className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Sending...' : 'Send Message'}
