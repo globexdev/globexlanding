@@ -16,9 +16,8 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Session } from '@supabase/supabase-js';
-import ReCAPTCHA from 'react-google-recaptcha';
 
 interface MainAppProps {
   session: Session | null;
@@ -29,7 +28,6 @@ interface MainAppProps {
 export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
@@ -57,19 +55,14 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
     setIsSubmitting(true);
 
     try {
-      const recaptchaValue = await recaptchaRef.current?.executeAsync();
-      if (!recaptchaValue) {
-        alert('Please complete the reCAPTCHA verification');
-        return;
-      }
-
       const formData = new FormData(e.currentTarget);
       const data = {
+        access_key: '3caa78ff-f162-420a-b287-4c9d28330554',
         name: formData.get('name'),
         email: formData.get('email'),
         subject: formData.get('subject'),
         message: formData.get('message'),
-        recaptchaToken: recaptchaValue
+        botcheck: false
       };
 
       const response = await fetch('https://api.web3forms.com/submit', {
@@ -78,21 +71,23 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          ...data,
-          access_key: '3caa78ff-f162-420a-b287-4c9d28330554'
-        })
+        body: JSON.stringify(data)
       });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         alert('Message sent successfully!');
         (e.target as HTMLFormElement).reset();
-        recaptchaRef.current?.reset();
       } else {
-        throw new Error('Failed to send message');
+        throw new Error(result.message || 'Failed to send message');
       }
     } catch (error) {
-      alert('Error sending message. Please try again.');
+      if (error instanceof Error) {
+        alert(`Error sending message: ${error.message}`);
+      } else {
+        alert('Error sending message. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -400,22 +395,13 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-colors"
               ></textarea>
               
-              <div className="flex flex-col space-y-4">
-                <ReCAPTCHA
-                  ref={recaptchaRef}
-                  size="normal"
-                  sitekey="6LdtetUqAAAAAEJVlY69bHSfIsncKXjHH_AXuyio"
-                  className="mx-auto"
-                />
-                
-                <button 
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                </button>
-              </div>
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Message'}
+              </button>
             </form>
           </div>
         </div>
