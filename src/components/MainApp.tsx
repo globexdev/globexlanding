@@ -3,7 +3,6 @@ import {
   Smartphone, 
   Globe, 
   Users, 
-  Mail, 
   Github, 
   Linkedin, 
   Twitter,
@@ -17,8 +16,9 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 interface MainAppProps {
   session: Session | null;
@@ -28,6 +28,8 @@ interface MainAppProps {
 
 export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
@@ -52,15 +54,24 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      subject: formData.get('subject'),
-      message: formData.get('message')
-    };
+    setIsSubmitting(true);
 
     try {
+      const recaptchaValue = await recaptchaRef.current?.executeAsync();
+      if (!recaptchaValue) {
+        alert('Please complete the reCAPTCHA verification');
+        return;
+      }
+
+      const formData = new FormData(e.currentTarget);
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        subject: formData.get('subject'),
+        message: formData.get('message'),
+        recaptchaToken: recaptchaValue
+      };
+
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
@@ -76,11 +87,14 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
       if (response.ok) {
         alert('Message sent successfully!');
         (e.target as HTMLFormElement).reset();
+        recaptchaRef.current?.reset();
       } else {
         throw new Error('Failed to send message');
       }
     } catch (error) {
       alert('Error sending message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -385,12 +399,23 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
                 required
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-colors"
               ></textarea>
-              <button 
-                type="submit"
-                className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Send Message
-              </button>
+              
+              <div className="flex flex-col space-y-4">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  size="normal"
+                  sitekey="6LdtetUqAAAAAEJVlY69bHSfIsncKXjHH_AXuyio"
+                  className="mx-auto"
+                />
+                
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -399,7 +424,7 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-12">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12">
+          <div className="grid md:grid-cols-3 gap-12">
             <div>
               <div className="flex items-center space-x-2 mb-6">
                 <Code2 className="h-8 w-8 text-blue-500" />
@@ -416,15 +441,6 @@ export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) 
                 <li><a href="#services" onClick={handleScroll} className="hover:text-blue-500 transition-colors">Services</a></li>
                 <li><a href="#projects" onClick={handleScroll} className="hover:text-blue-500 transition-colors">Projects</a></li>
                 <li><a href="#about" onClick={handleScroll} className="hover:text-blue-500 transition-colors">About</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-white">Contact</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center space-x-2">
-                  <Mail className="h-5 w-5" />
-                  <span>contact@globex.com</span>
-                </li>
               </ul>
             </div>
             <div>
