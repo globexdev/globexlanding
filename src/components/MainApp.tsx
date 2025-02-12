@@ -23,9 +23,10 @@ import { Session } from '@supabase/supabase-js';
 interface MainAppProps {
   session: Session | null;
   onShowAuth: () => void;
+  onShowDashboard?: () => void;
 }
 
-export function MainApp({ session, onShowAuth }: MainAppProps) {
+export function MainApp({ session, onShowAuth, onShowDashboard }: MainAppProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -115,14 +116,23 @@ export function MainApp({ session, onShowAuth }: MainAppProps) {
               <a href="#contact" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
             </div>
 
-            {/* Desktop Login Button */}
+            {/* Desktop Login/Dashboard Button */}
             <div className="hidden md:block">
-              <button 
-                onClick={onShowAuth}
-                className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors"
-              >
-                {session ? 'Dashboard' : 'Login'}
-              </button>
+              {session ? (
+                <button 
+                  onClick={onShowDashboard}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <button 
+                  onClick={onShowAuth}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors"
+                >
+                  Login
+                </button>
+              )}
             </div>
           </div>
 
@@ -134,12 +144,21 @@ export function MainApp({ session, onShowAuth }: MainAppProps) {
               <a href="#projects" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Projects</a>
               <a href="#about" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
               <a href="#contact" onClick={handleScroll} className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
-              <button 
-                onClick={onShowAuth}
-                className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors w-full"
-              >
-                {session ? 'Dashboard' : 'Login'}
-              </button>
+              {session ? (
+                <button 
+                  onClick={onShowDashboard}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors w-full"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <button 
+                  onClick={onShowAuth}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors w-full"
+                >
+                  Login
+                </button>
+              )}
             </div>
           </div>
         </nav>

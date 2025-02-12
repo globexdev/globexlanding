@@ -32,44 +32,26 @@ function App() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setShowDashboard(false);
+    setSession(null);
   };
 
   // If user is authenticated and wants to see dashboard
   if (session && showDashboard) {
-    return <Dashboard session={session} onSignOut={handleSignOut} />;
+    return (
+      <Dashboard 
+        session={session} 
+        onSignOut={handleSignOut} 
+        onBackToMain={() => setShowDashboard(false)} 
+      />
+    );
   }
 
   return (
     <>
-      <div className="fixed top-4 right-4 z-50">
-        {session ? (
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowDashboard(true)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors"
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="bg-gray-600 text-white px-6 py-2 rounded-full hover:bg-gray-700 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowAuthDialog(true)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors"
-          >
-            Login
-          </button>
-        )}
-      </div>
-
       <MainApp 
         session={session} 
-        onShowAuth={() => setShowAuthDialog(true)} 
+        onShowAuth={() => setShowAuthDialog(true)}
+        onShowDashboard={() => setShowDashboard(true)}
       />
 
       {/* Auth Dialog */}

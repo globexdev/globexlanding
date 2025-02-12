@@ -1,7 +1,7 @@
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { LogOut, User, Mail, Calendar, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogOut, User, Mail, Calendar, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 interface Profile {
   username: string;
@@ -14,9 +14,10 @@ interface Profile {
 interface DashboardProps {
   session: Session;
   onSignOut: () => Promise<void>;
+  onBackToMain: () => void;
 }
 
-export function Dashboard({ session, onSignOut }: DashboardProps) {
+export function Dashboard({ session, onSignOut, onBackToMain }: DashboardProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -130,7 +131,16 @@ export function Dashboard({ session, onSignOut }: DashboardProps) {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="bg-blue-600 px-6 py-8">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={onBackToMain}
+                  className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  <span>Back to Main</span>
+                </button>
+                <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+              </div>
               <button
                 onClick={onSignOut}
                 className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
